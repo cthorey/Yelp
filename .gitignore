@@ -1,6 +1,7 @@
 .DS*
 Notebook/.ipynb*
 Data/*
+log*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
