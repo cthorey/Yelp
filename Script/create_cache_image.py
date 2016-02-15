@@ -14,12 +14,12 @@ from skimage.transform import resize
 
 from os.path import expanduser
 home = expanduser("~")
-datap = os.path.join(home, 'Documents', 'project',
-                     'kagle', 'yelp', 'Data', 'train-val-test')
+datap = os.path.join('Documents', 'project',
+                     'kagle', 'yelp', 'Data')
 
 
 def check_if_image_exists(fname):
-    return os.path.exists(fname)
+    return os.path.exists(os.path.join(home, fname))
 
 
 def get_current_date():
@@ -36,7 +36,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    dfname = os.path.join(datap, args.whichset + '.csv')
+    dfname = os.path.join(home, datap, 'train-val-test',
+                          args.whichset + '.csv')
     df = pd.read_csv(dfname)
 
     df['exist'] = df['photo_path'].apply(check_if_image_exists)
@@ -45,6 +46,9 @@ if __name__ == '__main__':
 
     df = df[df['exist']]
     df = df.reset_index(drop=True)
+
+    if not os.path.isdir(os.path.join(home, datap, 'train-val-test', 'cache')):
+        os.mkdir(os.path.join(home, datap, 'train-val-test', 'cache'))
 
     X_fname = 'cache/X_%s_%s_%s.npy' % (args.whichset, args.size,
                                         get_current_date())
@@ -57,20 +61,20 @@ if __name__ == '__main__':
 
     print X_shape, y_shape
 
-    if os.path.exists(os.path.join(datap, X_fname)) and not args.overwrite:
+    if os.path.exists(os.path.join(home, datap, 'train-val-test', X_fname)) and not args.overwrite:
         print '%s exists. Use --overwrite' % X_fname
         sys.exit(1)
 
-    if os.path.exists(os.path.join(datap, y_fname)) and not args.overwrite:
+    if os.path.exists(os.path.join(home, datap, 'train-val-test', y_fname)) and not args.overwrite:
         print '%s exists. Use --overwrite' % y_fname
         sys.exit(1)
 
     print 'Will write X to %s with shape of %s' % (X_fname, X_shape)
     print 'Will write y to %s with shape of %s' % (y_fname, y_shape)
 
-    X_fp = np.memmap(os.path.join(datap, X_fname),
+    X_fp = np.memmap(os.path.join(home, datap, 'train-val-test', X_fname),
                      dtype=np.float32, mode='w+', shape=X_shape)
-    y_fp = np.memmap(os.path.join(datap, y_fname),
+    y_fp = np.memmap(os.path.join(home, datap, 'train-val-test', y_fname),
                      dtype=np.int32, mode='w+', shape=y_shape)
 
     labs = [f for f in df.columns if f.split('_')[0] == 'label']
@@ -81,7 +85,7 @@ if __name__ == '__main__':
         labels = row[labs]
 
         try:
-            img = imread(fname)
+            img = imread(os.path.join(home, fname))
             img_h, img_w, _ = img.shape
             img = resize(img, (args.size, args.size))
             img = img.transpose(2, 0, 1)
